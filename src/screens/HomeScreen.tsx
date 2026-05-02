@@ -8,6 +8,13 @@ interface HomeScreenProps {
   onFile: (file: File) => void;
 }
 
+const FEATURES = [
+  { icon: 'compress',  label: 'บีบอัดไฟล์',  desc: 'ลดขนาดด้วย quality slider พร้อมดูประมาณการก่อน', color: '' },
+  { icon: 'convert',   label: 'แปลงรูปแบบ',  desc: 'ส่งออกเป็น DOCX · JPG · PNG · TXT · HTML',       color: 'var(--convert)'   },
+  { icon: 'rotate',    label: 'หมุนหน้า',     desc: 'บังคับทุกหน้าเป็น Portrait หรือ Landscape',       color: 'var(--rotate)'    },
+  { icon: 'watermark', label: 'Watermark',    desc: 'ประทับข้อความลงทุกหน้า รองรับภาษาไทย',            color: 'var(--watermark)' },
+] as const;
+
 export default function HomeScreen({ t, onFile }: HomeScreenProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setTimeout(() => setMounted(true), 40); }, []);
@@ -15,7 +22,7 @@ export default function HomeScreen({ t, onFile }: HomeScreenProps) {
   return (
     <div style={{
       minHeight: '100vh', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center', padding: '80px 24px',
+      alignItems: 'center', justifyContent: 'center', padding: '80px 24px 48px',
     }}>
       <div style={{
         maxWidth: 480, width: '100%',
@@ -37,13 +44,38 @@ export default function HomeScreen({ t, onFile }: HomeScreenProps) {
 
         <DropZone t={t} onFile={onFile} />
 
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 20 }}>
-          {([['compress', 'บีบอัดไฟล์'], ['convert', 'แปลงรูปแบบ'], ['doc', 'วิเคราะห์ PDF']] as const).map(([icon, lbl]) => (
-            <div key={icon} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text3)' }}>
-              <Icon name={icon} size={13} color="var(--text3)" sw={1.5} />
-              {lbl}
-            </div>
-          ))}
+        {/* Feature grid */}
+        <div style={{ marginTop: 20 }}>
+          <p style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10, textAlign: 'center' }}>
+            สิ่งที่ทำได้
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {FEATURES.map(f => {
+              const color = f.color || t.accentColor;
+              return (
+                <div key={f.icon} style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 12,
+                  padding: '13px 14px',
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--r)',
+                  boxShadow: 'var(--shadow-sm)',
+                }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    background: color + '14',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Icon name={f.icon} size={15} color={color} sw={1.6} />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 2 }}>{f.label}</p>
+                    <p style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>{f.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 40, fontSize: 12, color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
