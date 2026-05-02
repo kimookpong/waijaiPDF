@@ -29,9 +29,7 @@ export default function Nav({ t, onHome, onSettings, showBack = false }: NavProp
         </button>
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={onHome}>
-          <div style={{ width: 28, height: 28, borderRadius: 7, background: t.accentColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="layers" size={14} color="white" sw={2} />
-          </div>
+          <img src="/waijaiPDF/logo.png" alt="waijaiPDF" style={{ width: 28, height: 28, borderRadius: 7, objectFit: 'cover' }} />
           <span style={{ fontWeight: 600, fontSize: 15, letterSpacing: '-0.02em' }}>{t.brandName}</span>
         </div>
       )}
