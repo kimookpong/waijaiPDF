@@ -5,10 +5,11 @@ export type Screen =
   | 'compress'
   | 'convert'
   | 'rotate'
+  | 'watermark'
   | 'processing'
   | 'done';
 
-export type ActionId = 'compress' | 'convert' | 'rotate';
+export type ActionId = 'compress' | 'convert' | 'rotate' | 'watermark';
 
 export interface Analysis {
   pages: number;
@@ -30,7 +31,14 @@ export interface RotateOptions {
   orientation: 'portrait' | 'landscape';
 }
 
-export type ProcessOptions = CompressOptions | ConvertOptions | RotateOptions;
+export interface WatermarkOptions {
+  text: string;
+  opacity: number;
+  rotation: 'diagonal' | 'horizontal';
+  color: string;
+}
+
+export type ProcessOptions = CompressOptions | ConvertOptions | RotateOptions | WatermarkOptions;
 
 // Produced by actual processing
 export interface ProcessResult {

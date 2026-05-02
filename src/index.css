@@ -19,6 +19,7 @@
   --accent-light:   oklch(97% 0.02 25);
   --convert:        oklch(52% 0.18 240);
   --rotate:         oklch(55% 0.17 290);
+  --watermark:      oklch(60% 0.16 65);
   --success:        oklch(56% 0.18 150);
   --success-light:  oklch(95% 0.04 150);
   --mono:  'DM Mono', monospace;

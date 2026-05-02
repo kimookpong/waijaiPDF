@@ -13,7 +13,7 @@ interface AnalysisScreenProps {
 
 interface ActionDef {
   id: ActionId;
-  icon: 'compress' | 'convert' | 'rotate';
+  icon: 'compress' | 'convert' | 'rotate' | 'watermark';
   label: string;
   sub: string;
   color: string;
@@ -39,6 +39,10 @@ export default function AnalysisScreen({ t, file, analysis, onPick, onReset }: A
     {
       id: 'rotate', icon: 'rotate', label: 'หมุนหน้า PDF', sub: 'บังคับทุกหน้าให้เป็น Portrait หรือ Landscape',
       color: 'var(--rotate)', suggested: false,
+    },
+    {
+      id: 'watermark', icon: 'watermark', label: 'ใส่ Watermark', sub: 'ประทับข้อความลงทุกหน้า เช่น CONFIDENTIAL, DRAFT',
+      color: 'var(--watermark)', suggested: false,
     },
   ];
 

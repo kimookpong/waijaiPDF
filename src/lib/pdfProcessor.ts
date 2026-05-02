@@ -1,9 +1,8 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, degrees } from 'pdf-lib';
 import JSZip from 'jszip';
-import { degrees } from 'pdf-lib';
-import type { Analysis, CompressOptions, ConvertOptions, RotateOptions } from '../types';
+import type { Analysis, CompressOptions, ConvertOptions, RotateOptions, WatermarkOptions } from '../types';
 
 const isTextItem = (item: TextItem | TextMarkedContent): item is TextItem => 'str' in item;
 
@@ -107,6 +106,80 @@ export async function compressPDF(
 
   onProgress(93, 'บันทึกผล…');
   const bytes = await out.save({ useObjectStreams: true });
+  onProgress(100, 'เสร็จสิ้น');
+  return new Blob([bytes], { type: 'application/pdf' });
+}
+
+// ─── Watermark ────────────────────────────────────────────────────────────────
+// Renders the watermark text onto a transparent canvas (using the browser's
+// native font stack, which includes Noto Sans Thai already loaded by index.css),
+// then embeds the resulting PNG as a full-page transparent overlay so that any
+// script — including Thai — renders correctly without bundling font files.
+
+async function renderWatermarkOverlay(
+  text: string,
+  color: string,
+  opacity: number,
+  rotation: 'diagonal' | 'horizontal',
+  pdfWidth: number,
+  pdfHeight: number,
+): Promise<Blob> {
+  // 2× scale for sharper text when printed
+  const scale = 2;
+  const w = Math.round(pdfWidth  * scale);
+  const h = Math.round(pdfHeight * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d')!;
+
+  // Wait for fonts the browser has already started loading (Noto Sans Thai etc.)
+  await document.fonts.ready;
+
+  const fontSize = Math.max(16, Math.min(pdfWidth, pdfHeight) / Math.max(text.length * 0.55, 4)) * scale;
+  ctx.font        = `700 ${fontSize}px "Noto Sans Thai", "DM Sans", Helvetica, Arial, sans-serif`;
+  ctx.fillStyle   = color;
+  ctx.globalAlpha = opacity / 100;
+  ctx.textAlign   = 'center';
+  ctx.textBaseline = 'middle';
+
+  ctx.save();
+  ctx.translate(w / 2, h / 2);
+  if (rotation === 'diagonal') ctx.rotate(-Math.PI / 4);
+  ctx.fillText(text, 0, 0);
+  ctx.restore();
+
+  return canvasToBlob(canvas, 'image/png');
+}
+
+export async function watermarkPDF(
+  file: File,
+  opts: WatermarkOptions,
+  onProgress: ProgressFn,
+): Promise<Blob> {
+  onProgress(2, 'โหลดไฟล์…');
+  const buf = await file.arrayBuffer();
+  const doc = await PDFDocument.load(buf);
+
+  onProgress(42, 'เพิ่ม watermark…');
+  const pages = doc.getPages();
+  const n = pages.length;
+
+  for (let i = 0; i < n; i++) {
+    const page = pages[i];
+    const { width, height } = page.getSize();
+
+    const overlay  = await renderWatermarkOverlay(opts.text, opts.color, opts.opacity, opts.rotation, width, height);
+    const pngBytes = new Uint8Array(await overlay.arrayBuffer());
+    const img      = await doc.embedPng(pngBytes);
+    page.drawImage(img, { x: 0, y: 0, width, height });
+
+    onProgress(42 + Math.round(((i + 1) / n) * 51), 'เพิ่ม watermark…');
+  }
+
+  onProgress(95, 'บันทึกผล…');
+  const bytes = new Uint8Array(await doc.save());
   onProgress(100, 'เสร็จสิ้น');
   return new Blob([bytes], { type: 'application/pdf' });
 }

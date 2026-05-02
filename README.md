@@ -12,6 +12,7 @@
 | **Compress** | บีบอัด PDF ผ่าน quality slider (0–100) พร้อมแสดงขนาดโดยประมาณแบบ real-time ก่อน process |
 | **Convert** | แปลงเป็น DOCX, JPG, PNG, TXT หรือ HTML รองรับทั้ง text-based และ scanned PDF |
 | **Rotate** | บังคับทุกหน้าให้เป็น Portrait หรือ Landscape โดยหมุนเฉพาะหน้าที่มีทิศทางผิด |
+| **Watermark** | ประทับข้อความลงทุกหน้า เลือกข้อความ สี ความโปร่งแสง และทิศทาง (เฉียง/แนวนอน) |
 
 ---
 

@@ -7,6 +7,7 @@ import AnalysisScreen from "./screens/AnalysisScreen";
 import CompressScreen from "./screens/CompressScreen";
 import ConvertScreen from "./screens/ConvertScreen";
 import RotateScreen from "./screens/RotateScreen";
+import WatermarkScreen from "./screens/WatermarkScreen";
 import ProcessingScreen from "./screens/ProcessingScreen";
 import DownloadScreen from "./screens/DownloadScreen";
 import type {
@@ -187,6 +188,14 @@ export default function App() {
         )}
         {screen === "rotate" && file && (
           <RotateScreen
+            t={t}
+            file={file}
+            onSubmit={handleSubmit}
+            onBack={() => setScreen("analyzed")}
+          />
+        )}
+        {screen === "watermark" && file && (
+          <WatermarkScreen
             t={t}
             file={file}
             onSubmit={handleSubmit}
