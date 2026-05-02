@@ -6,6 +6,7 @@ import AnalyzingScreen from "./screens/AnalyzingScreen";
 import AnalysisScreen from "./screens/AnalysisScreen";
 import CompressScreen from "./screens/CompressScreen";
 import ConvertScreen from "./screens/ConvertScreen";
+import RotateScreen from "./screens/RotateScreen";
 import ProcessingScreen from "./screens/ProcessingScreen";
 import DownloadScreen from "./screens/DownloadScreen";
 import type {
@@ -180,6 +181,14 @@ export default function App() {
             t={t}
             file={file}
             analysis={analysis}
+            onSubmit={handleSubmit}
+            onBack={() => setScreen("analyzed")}
+          />
+        )}
+        {screen === "rotate" && file && (
+          <RotateScreen
+            t={t}
+            file={file}
             onSubmit={handleSubmit}
             onBack={() => setScreen("analyzed")}
           />

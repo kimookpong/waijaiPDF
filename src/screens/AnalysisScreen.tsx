@@ -13,7 +13,7 @@ interface AnalysisScreenProps {
 
 interface ActionDef {
   id: ActionId;
-  icon: 'compress' | 'convert';
+  icon: 'compress' | 'convert' | 'rotate';
   label: string;
   sub: string;
   color: string;
@@ -35,6 +35,10 @@ export default function AnalysisScreen({ t, file, analysis, onPick, onReset }: A
     {
       id: 'convert', icon: 'convert', label: 'แปลงไฟล์ PDF', sub: 'ส่งออกเป็น DOCX, JPG, PNG, TXT, HTML',
       color: 'var(--convert)', suggested: suggestConvert,
+    },
+    {
+      id: 'rotate', icon: 'rotate', label: 'หมุนหน้า PDF', sub: 'บังคับทุกหน้าให้เป็น Portrait หรือ Landscape',
+      color: 'var(--rotate)', suggested: false,
     },
   ];
 

@@ -2,7 +2,8 @@ import * as pdfjsLib from 'pdfjs-dist';
 import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api';
 import { PDFDocument } from 'pdf-lib';
 import JSZip from 'jszip';
-import type { Analysis, CompressOptions, ConvertOptions } from '../types';
+import { degrees } from 'pdf-lib';
+import type { Analysis, CompressOptions, ConvertOptions, RotateOptions } from '../types';
 
 const isTextItem = (item: TextItem | TextMarkedContent): item is TextItem => 'str' in item;
 
@@ -106,6 +107,44 @@ export async function compressPDF(
 
   onProgress(93, 'บันทึกผล…');
   const bytes = await out.save({ useObjectStreams: true });
+  onProgress(100, 'เสร็จสิ้น');
+  return new Blob([bytes], { type: 'application/pdf' });
+}
+
+// ─── Rotate ───────────────────────────────────────────────────────────────────
+// Normalises every page to the requested orientation by rotating pages that
+// are already in the opposite orientation 90° clockwise.
+
+export async function rotatePDF(
+  file: File,
+  opts: RotateOptions,
+  onProgress: ProgressFn,
+): Promise<Blob> {
+  onProgress(2, 'โหลดไฟล์…');
+  const buf = await file.arrayBuffer();
+  const doc = await PDFDocument.load(buf);
+
+  onProgress(42, 'หมุนหน้า…');
+  const pages = doc.getPages();
+  const n = pages.length;
+
+  for (let i = 0; i < n; i++) {
+    const page = pages[i];
+    const w = page.getWidth();
+    const h = page.getHeight();
+    const isLandscape = w > h;
+    const wantLandscape = opts.orientation === 'landscape';
+
+    if (isLandscape !== wantLandscape) {
+      const cur = page.getRotation().angle;
+      page.setRotation(degrees(cur + 90));
+    }
+
+    onProgress(42 + Math.round(((i + 1) / n) * 51), 'หมุนหน้า…');
+  }
+
+  onProgress(95, 'บันทึกผล…');
+  const bytes = new Uint8Array(await doc.save());
   onProgress(100, 'เสร็จสิ้น');
   return new Blob([bytes], { type: 'application/pdf' });
 }

@@ -25,6 +25,7 @@ function triggerDownload(blob: Blob, filename: string) {
 export default function DownloadScreen({ t, file, result, action, onReset }: DownloadScreenProps) {
   const [clicked, setClicked] = useState(false);
   const isCompress = action === 'compress';
+  const isRotate   = action === 'rotate';
   const savedPct   = isCompress
     ? Math.max(0, Math.round(((file.size - result.outputSize) / file.size) * 100))
     : null;
@@ -46,7 +47,7 @@ export default function DownloadScreen({ t, file, result, action, onReset }: Dow
             </svg>
           </div>
           <h2 style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-0.03em', marginBottom: 4 }}>
-            {isCompress ? 'บีบอัดสำเร็จ!' : 'แปลงไฟล์สำเร็จ!'}
+            {isCompress ? 'บีบอัดสำเร็จ!' : isRotate ? 'หมุนหน้าสำเร็จ!' : 'แปลงไฟล์สำเร็จ!'}
           </h2>
           <p style={{ fontSize: 13, color: 'var(--text3)' }}>ไฟล์พร้อมสำหรับดาวน์โหลด</p>
         </div>

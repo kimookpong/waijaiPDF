@@ -4,10 +4,11 @@ export type Screen =
   | 'analyzed'
   | 'compress'
   | 'convert'
+  | 'rotate'
   | 'processing'
   | 'done';
 
-export type ActionId = 'compress' | 'convert';
+export type ActionId = 'compress' | 'convert' | 'rotate';
 
 export interface Analysis {
   pages: number;
@@ -25,7 +26,11 @@ export interface ConvertOptions {
   format: 'docx' | 'jpg' | 'png' | 'txt' | 'html';
 }
 
-export type ProcessOptions = CompressOptions | ConvertOptions;
+export interface RotateOptions {
+  orientation: 'portrait' | 'landscape';
+}
+
+export type ProcessOptions = CompressOptions | ConvertOptions | RotateOptions;
 
 // Produced by actual processing
 export interface ProcessResult {
