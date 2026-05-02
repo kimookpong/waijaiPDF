@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:       oklch(98.5% 0.006 60);
+  --bg2:      oklch(96%   0.008 60);
+  --bg3:      oklch(93%   0.010 60);
+  --surface:  #ffffff;
+  --border:   oklch(88%   0.010 60);
+  --text:     oklch(18%   0.010 260);
+  --text2:    oklch(42%   0.010 260);
+  --text3:    oklch(62%   0.010 260);
+  --accent:         #7a0006;
+  --accent-light:   oklch(97% 0.02 25);
+  --convert:        oklch(52% 0.18 240);
+  --success:        oklch(56% 0.18 150);
+  --success-light:  oklch(95% 0.04 150);
+  --mono:  'DM Mono', monospace;
+  --sans:  'DM Sans', 'Noto Sans Thai', sans-serif;
+  --r:   12px;
+  --rl:  20px;
+  --shadow-sm: 0 1px 3px oklch(0% 0 0 / .06), 0 1px 2px oklch(0% 0 0 / .04);
+  --shadow-md: 0 4px 16px oklch(0% 0 0 / .08), 0 1px 4px oklch(0% 0 0 / .04);
+  --shadow-lg: 0 12px 40px oklch(0% 0 0 / .10), 0 2px 8px oklch(0% 0 0 / .05);
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@keyframes fadeUp  { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes spin    { to { transform: rotate(360deg); } }
+
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 100px;
+  outline: none;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .18);
+  cursor: pointer;
+}
+input[type=range]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .18);
+  cursor: pointer;
+}

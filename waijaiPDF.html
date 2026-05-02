@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>waijaiPDF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       oklch(98.5% 0.006 60);
+    --bg2:      oklch(96%   0.008 60);
+    --bg3:      oklch(93%   0.010 60);
+    --surface:  #ffffff;
+    --border:   oklch(88%   0.010 60);
+    --text:     oklch(18%   0.010 260);
+    --text2:    oklch(42%   0.010 260);
+    --text3:    oklch(62%   0.010 260);
+    --accent:         #7a0006;
+    --accent-light:   oklch(97% 0.02 25);
+    --convert:        oklch(52% 0.18 240);
+    --success:        oklch(56% 0.18 150);
+    --success-light:  oklch(95% 0.04 150);
+    --mono:  'DM Mono', monospace;
+    --sans:  'DM Sans', 'Noto Sans Thai', sans-serif;
+    --r:   12px;
+    --rl:  20px;
+    --shadow-sm: 0 1px 3px oklch(0% 0 0 / .06), 0 1px 2px oklch(0% 0 0 / .04);
+    --shadow-md: 0 4px 16px oklch(0% 0 0 / .08), 0 1px 4px oklch(0% 0 0 / .04);
+    --shadow-lg: 0 12px 40px oklch(0% 0 0 / .10), 0 2px 8px oklch(0% 0 0 / .05);
+  }
+
+  html, body, #root { height: 100%; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  @keyframes fadeUp  { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:none } }
+  @keyframes fadeIn  { from { opacity:0 } to { opacity:1 } }
+  @keyframes scaleIn { from { opacity:0; transform:scale(.96) } to { opacity:1; transform:none } }
+  @keyframes spin    { to { transform:rotate(360deg) } }
+  @keyframes pulse   { 0%,100% { opacity:1 } 50% { opacity:.4 } }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    height: 4px; border-radius: 100px; outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--accent);
+    box-shadow: 0 1px 4px rgba(0,0,0,.18); cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--accent);
+    box-shadow: 0 1px 4px rgba(0,0,0,.18); cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- Tweaks panel -->
+<script type="text/babel">
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    transform:scale(var(--dc-inv-zoom,1));transform-origin:bottom right;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;scrollbar-width:thin;
+    scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+  .twk-field{appearance:none;width:100%;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;
+    border-radius:50%;background:#fff;border:.5px solid rgba(0,0,0,.12);
+    box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;
+    border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;
+    background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  .twk-swatch::-moz-color-swatch{border:0;border-radius:5.5px}
+`;
+
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  const setTweak = React.useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null
+      ? keyOrEdits : { [keyOrEdits]: val };
+    setValues(prev => ({ ...prev, ...edits }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+  }, []);
+  return [values, setTweak];
+}
+
+function TweaksPanel({ title = 'Tweaks', children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+
+  const clamp = React.useCallback(() => {
+    const p = dragRef.current; if (!p) return;
+    const maxR = Math.max(PAD, window.innerWidth - p.offsetWidth - PAD);
+    const maxB = Math.max(PAD, window.innerHeight - p.offsetHeight - PAD);
+    offsetRef.current = {
+      x: Math.min(maxR, Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(maxB, Math.max(PAD, offsetRef.current.y)),
+    };
+    p.style.right = offsetRef.current.x + 'px';
+    p.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    clamp();
+    const ro = new ResizeObserver(clamp);
+    ro.observe(document.documentElement);
+    return () => ro.disconnect();
+  }, [open, clamp]);
+
+  React.useEffect(() => {
+    const h = e => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', h);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', h);
+  }, []);
+
+  const onDragStart = e => {
+    const p = dragRef.current; if (!p) return;
+    const r = p.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const sr = window.innerWidth - r.right, sb = window.innerHeight - r.bottom;
+    const move = ev => { offsetRef.current = { x: sr - (ev.clientX - sx), y: sb - (ev.clientY - sy) }; clamp(); };
+    const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+    window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+  };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel" style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" onMouseDown={e => e.stopPropagation()}
+            onClick={() => { setOpen(false); window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); }}>✕</button>
+        </div>
+        <div className="twk-body">{children}</div>
+      </div>
+    </>
+  );
+}
+
+function TweakSection({ label }) { return <div className="twk-sect">{label}</div>; }
+function TweakSlider({ label, value, min=0, max=100, step=1, unit='', onChange }) {
+  return (
+    <div className="twk-row">
+      <div className="twk-lbl"><span>{label}</span><span className="twk-val">{value}{unit}</span></div>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+        value={value} onChange={e => onChange(Number(e.target.value))} />
+    </div>
+  );
+}
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+        onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+function TweakText({ label, value, onChange }) {
+  return (
+    <div className="twk-row">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <input className="twk-field" type="text" value={value} onChange={e => onChange(e.target.value)} />
+    </div>
+  );
+}
+function TweakColor({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <input type="color" className="twk-swatch" value={value} onChange={e => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+Object.assign(window, { useTweaks, TweaksPanel, TweakSection, TweakSlider, TweakToggle, TweakText, TweakColor });
+</script>
+
+<!-- App -->
+<script type="text/babel">
+
+const TWEAK_DEFAULTS = {
+  accentColor: '#7a0006',
+  brandName: 'waijaiPDF',
+  animationSpeed: 1.5,
+};
+
+const R  = 'var(--r)';
+const RL = 'var(--rl)';
+
+const fmtSize = b => {
+  if (b < 1024) return `${b} B`;
+  if (b < 1048576) return `${(b/1024).toFixed(1)} KB`;
+  return `${(b/1048576).toFixed(2)} MB`;
+};
+const estCompressed = (b, q) => Math.round(b * (0.15 + (q/100) * 0.75));
+
+// ─── Icons ─────────────────────────────────────────────────────────────────
+const Icon = ({ name, size=20, color='currentColor', sw=1.6 }) => {
+  const paths = {
+    upload:   <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>,
+    file:     <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,
+    compress: <><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></>,
+    convert:  <><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></>,
+    download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
+    check:    <polyline points="20 6 9 17 4 12"/>,
+    x:        <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+    back:     <polyline points="15 18 9 12 15 6"/>,
+    layers:   <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
+    settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
+    scan:     <><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></>,
+    doc:      <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="10" y1="9" x2="16" y2="9"/></>,
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+      {paths[name]}
+    </svg>
+  );
+};
+
+// ─── Nav ───────────────────────────────────────────────────────────────────
+const Nav = ({ t, onHome, onSettings, showBack, showSettings = true }) => (
+  <nav style={{
+    position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+    height: 56, background: 'rgba(255,255,255,0.88)',
+    backdropFilter: 'blur(14px)', borderBottom: '1px solid var(--border)',
+    display: 'flex', alignItems: 'center', padding: '0 20px', gap: 12,
+  }}>
+    {showBack ? (
+      <button onClick={onHome} style={{
+        background: 'none', border: '1px solid var(--border)', borderRadius: 8,
+        padding: '5px 8px', display: 'flex', alignItems: 'center', gap: 6,
+        color: 'var(--text2)', fontSize: 13, cursor: 'pointer', transition: 'all .15s',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = t.accentColor; e.currentTarget.style.color = t.accentColor; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text2)'; }}
+      >
+        <Icon name="back" size={14} /> กลับ
+      </button>
+    ) : (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={onHome}>
+        <div style={{ width: 28, height: 28, borderRadius: 7, background: t.accentColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="layers" size={14} color="white" sw={2} />
+        </div>
+        <span style={{ fontWeight: 600, fontSize: 15, letterSpacing: '-0.02em' }}>{t.brandName}</span>
+      </div>
+    )}
+    <div style={{ flex: 1 }} />
+    {showSettings && (
+      <button onClick={onSettings} style={{
+        background: 'none', border: '1px solid var(--border)', borderRadius: 8,
+        padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 6,
+        color: 'var(--text2)', fontSize: 13, cursor: 'pointer', transition: 'all .15s',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = t.accentColor; e.currentTarget.style.color = t.accentColor; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text2)'; }}
+      >
+        <Icon name="settings" size={14} />
+      </button>
+    )}
+  </nav>
+);
+
+// ─── Drop Zone ─────────────────────────────────────────────────────────────
+const DropZone = ({ t, onFile }) => {
+  const [drag, setDrag] = React.useState(false);
+  const id = React.useId();
+  const handleDrop = e => { e.preventDefault(); setDrag(false); if (e.dataTransfer.files[0]) onFile(e.dataTransfer.files[0]); };
+  const handleChange = e => { if (e.target.files[0]) onFile(e.target.files[0]); };
+
+  return (
+    <div
+      onDragOver={e => { e.preventDefault(); setDrag(true); }}
+      onDragLeave={() => setDrag(false)}
+      onDrop={handleDrop}
+      onClick={() => document.getElementById(id).click()}
+      style={{
+        border: `2px dashed ${drag ? t.accentColor : 'var(--border)'}`,
+        borderRadius: RL, background: drag ? t.accentColor + '08' : 'var(--surface)',
+        padding: '48px 24px', cursor: 'pointer', transition: 'all .2s ease',
+        textAlign: 'center', boxShadow: drag ? `0 0 0 4px ${t.accentColor}14` : 'var(--shadow-sm)',
+      }}
+    >
+      <div style={{
+        width: 56, height: 56, borderRadius: 14,
+        background: drag ? t.accentColor : 'var(--bg2)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        margin: '0 auto 16px', transition: 'all .2s',
+      }}>
+        <Icon name="upload" size={24} color={drag ? 'white' : 'var(--text3)'} sw={1.5} />
+      </div>
+      <p style={{ fontSize: 15, fontWeight: 500, color: drag ? t.accentColor : 'var(--text)', marginBottom: 6 }}>
+        {drag ? 'วางไฟล์ที่นี่' : 'วางหรือคลิกเพื่ออัปโหลด PDF'}
+      </p>
+      <p style={{ fontSize: 12, color: 'var(--text3)' }}>PDF เท่านั้น · สูงสุด 100 MB</p>
+      <input id={id} type="file" accept=".pdf,application/pdf" style={{ display: 'none' }} onChange={handleChange} />
+    </div>
+  );
+};
+
+// ─── Screen: Home (Upload) ─────────────────────────────────────────────────
+const HomeScreen = ({ t, onFile }) => {
+  const [in_, setIn] = React.useState(false);
+  React.useEffect(() => { setTimeout(() => setIn(true), 40); }, []);
+
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center', padding: '80px 24px',
+    }}>
+      <div style={{
+        maxWidth: 480, width: '100%',
+        opacity: in_ ? 1 : 0, transform: in_ ? 'none' : 'translateY(20px)',
+        transition: 'opacity .4s ease, transform .4s ease',
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <h1 style={{
+            fontSize: 'clamp(28px, 5vw, 44px)', fontWeight: 600,
+            letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: 12,
+          }}>
+            จัดการไฟล์ PDF<br />
+            <span style={{ color: t.accentColor }}>ง่ายและรวดเร็ว</span>
+          </h1>
+          <p style={{ fontSize: 14, color: 'var(--text3)', fontWeight: 300, lineHeight: 1.65 }}>
+            อัปโหลดไฟล์ ระบบจะวิเคราะห์และแนะนำวิธีที่เหมาะสม
+          </p>
+        </div>
+        <DropZone t={t} onFile={onFile} />
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 20 }}>
+          {[['compress', 'บีบอัดไฟล์'], ['convert', 'แปลงรูปแบบ'], ['scan', 'วิเคราะห์ PDF']].map(([icon, lbl]) => (
+            <div key={icon} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text3)' }}>
+              <Icon name={icon === 'scan' ? 'doc' : icon} size={13} color="var(--text3)" sw={1.5} />
+              {lbl}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Screen: Analyzing ─────────────────────────────────────────────────────
+const AnalyzingScreen = ({ file, speed, onDone }) => {
+  const steps = ['อ่านโครงสร้างไฟล์…', 'ตรวจสอบประเภทเนื้อหา…', 'นับจำนวนหน้า…', 'ประเมินขนาด…'];
+  const [step, setStep] = React.useState(0);
+  const [prog, setProg] = React.useState(0);
+
+  React.useEffect(() => {
+    let p = 0;
+    const tick = 180 / speed;
+    const iv = setInterval(() => {
+      p += Math.random() * 18 + 8;
+      if (p >= 100) { p = 100; clearInterval(iv); }
+      setProg(Math.round(p));
+      setStep(Math.min(steps.length - 1, Math.floor((p / 100) * steps.length)));
+      if (p >= 100) setTimeout(() => {
+        onDone({
+          pages: Math.floor(Math.random() * 48) + 1,
+          type: Math.random() > 0.4 ? 'text' : 'image',
+          size: file.size,
+        });
+      }, 400);
+    }, tick);
+    return () => clearInterval(iv);
+  }, []);
+
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '24px', animation: 'fadeIn .3s ease both',
+    }}>
+      <div style={{
+        background: 'var(--surface)', borderRadius: RL, padding: '44px 40px',
+        maxWidth: 400, width: '100%', boxShadow: 'var(--shadow-lg)',
+        border: '1px solid var(--border)', textAlign: 'center',
+      }}>
+        {/* Spinning icon */}
+        <div style={{
+          width: 64, height: 64, margin: '0 auto 24px', borderRadius: 16,
+          background: 'oklch(97% 0.02 25)', position: 'relative',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            position: 'absolute', inset: 0, borderRadius: 16,
+            border: '2px solid var(--accent)', borderTopColor: 'transparent',
+            animation: 'spin .85s linear infinite',
+          }} />
+          <Icon name="file" size={26} color="var(--accent)" sw={1.4} />
+        </div>
+
+        <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 6, letterSpacing: '-0.02em' }}>
+          กำลังวิเคราะห์ไฟล์
+        </h2>
+        <p style={{ fontSize: 12, color: 'var(--text3)', fontFamily: 'var(--mono)', marginBottom: 28 }}>
+          {file.name}
+        </p>
+
+        {/* Progress bar */}
+        <div style={{ height: 4, background: 'var(--bg3)', borderRadius: 100, overflow: 'hidden', marginBottom: 10 }}>
+          <div style={{
+            height: '100%', borderRadius: 100, background: 'var(--accent)',
+            width: `${prog}%`, transition: 'width .25s ease',
+          }} />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+          <span style={{ color: 'var(--text3)' }}>{steps[step]}</span>
+          <span style={{ color: 'var(--accent)', fontFamily: 'var(--mono)', fontWeight: 500 }}>{prog}%</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Screen: Analysis Result + Action Picker ───────────────────────────────
+const AnalysisScreen = ({ t, file, analysis, onPick, onReset }) => {
+  const [in_, setIn] = React.useState(false);
+  React.useEffect(() => { setTimeout(() => setIn(true), 40); }, []);
+
+  const suggestCompress = analysis.size > 500_000;
+  const suggestConvert  = analysis.type === 'image';
+
+  const actions = [
+    {
+      id: 'compress', icon: 'compress', label: 'บีบอัดไฟล์ PDF', sub: 'ลดขนาดไฟล์ด้วย slider คุณภาพ',
+      color: t.accentColor, suggested: suggestCompress && !suggestConvert,
+    },
+    {
+      id: 'convert', icon: 'convert', label: 'แปลงไฟล์ PDF', sub: 'ส่งออกเป็น DOCX, JPG, PNG, TXT, HTML',
+      color: 'var(--convert)', suggested: suggestConvert,
+    },
+  ];
+
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', padding: '88px 24px 60px',
+    }}>
+      <div style={{
+        maxWidth: 480, width: '100%',
+        opacity: in_ ? 1 : 0, transform: in_ ? 'none' : 'translateY(16px)',
+        transition: 'opacity .35s ease, transform .35s ease',
+      }}>
+
+        {/* Analysis card */}
+        <div style={{
+          background: 'var(--surface)', borderRadius: RL,
+          border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)',
+          marginBottom: 20, overflow: 'hidden',
+        }}>
+          {/* File row */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
+            borderBottom: '1px solid var(--border)',
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 9, flexShrink: 0,
+              background: t.accentColor + '12',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon name="file" size={17} color={t.accentColor} sw={1.5} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</p>
+              <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)', marginTop: 1 }}>{fmtSize(analysis.size)}</p>
+            </div>
+            <button onClick={onReset} style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--text3)', display: 'flex', padding: 4, borderRadius: 6,
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = t.accentColor}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text3)'}
+            ><Icon name="x" size={15} /></button>
+          </div>
+
+          {/* Analysis metrics */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
+            {[
+              { lbl: 'จำนวนหน้า', val: `${analysis.pages} หน้า`, mono: true },
+              { lbl: 'ประเภท', val: analysis.type === 'text' ? 'Text PDF' : 'Scanned', badge: analysis.type === 'image' },
+              { lbl: 'ขนาดไฟล์', val: fmtSize(analysis.size), mono: true },
+            ].map((m, i) => (
+              <div key={i} style={{
+                padding: '14px 12px', textAlign: 'center',
+                borderRight: i < 2 ? '1px solid var(--border)' : 'none',
+              }}>
+                <p style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4 }}>{m.lbl}</p>
+                <p style={{
+                  fontSize: 13, fontWeight: 600,
+                  fontFamily: m.mono ? 'var(--mono)' : 'inherit',
+                  color: m.badge ? 'oklch(58% 0.18 55)' : 'var(--text)',
+                }}>{m.val}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Action picker */}
+        <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 10, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+          เลือกการดำเนินการ
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {actions.map(a => <ActionCard key={a.id} action={a} onPick={onPick} />)}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ActionCard = ({ action: a, onPick }) => {
+  const [hov, setHov] = React.useState(false);
+  return (
+    <button
+      onClick={() => onPick(a.id)}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 16, padding: '18px 20px',
+        background: hov ? 'var(--surface)' : 'var(--surface)',
+        border: `1.5px solid ${hov ? a.color + '80' : a.suggested ? a.color + '40' : 'var(--border)'}`,
+        borderRadius: RL, cursor: 'pointer', textAlign: 'left', width: '100%',
+        boxShadow: hov ? `var(--shadow-md), 0 0 0 3px ${a.color}10` : a.suggested ? `var(--shadow-sm), 0 0 0 1px ${a.color}20` : 'var(--shadow-sm)',
+        transform: hov ? 'translateY(-1px)' : 'none',
+        transition: 'all .18s ease',
+        position: 'relative', overflow: 'hidden',
+      }}
+    >
+      {a.suggested && (
+        <div style={{
+          position: 'absolute', top: 10, right: 14,
+          fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
+          color: a.color, background: a.color + '14',
+          borderRadius: 100, padding: '2px 8px',
+        }}>แนะนำ</div>
+      )}
+      <div style={{
+        width: 46, height: 46, borderRadius: 12, flexShrink: 0,
+        background: hov ? a.color : a.color + '14',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'all .18s',
+      }}>
+        <Icon name={a.icon} size={20} color={hov ? 'white' : a.color} sw={1.7} />
+      </div>
+      <div style={{ flex: 1 }}>
+        <p style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: 3,
+          color: hov ? a.color : 'var(--text)', transition: 'color .18s' }}>{a.label}</p>
+        <p style={{ fontSize: 12, color: 'var(--text3)' }}>{a.sub}</p>
+      </div>
+      <div style={{ opacity: hov ? 1 : 0.25, transform: hov ? 'translateX(2px)' : 'none', transition: 'all .18s', flexShrink: 0 }}>
+        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={a.color}
+          strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: 'rotate(180deg)' }}>
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </div>
+    </button>
+  );
+};
+
+// ─── Screen: Compress Options ──────────────────────────────────────────────
+const CompressScreen = ({ t, file, onSubmit, onBack }) => {
+  const [quality, setQuality] = React.useState(60);
+  const [stripMeta, setStripMeta] = React.useState(true);
+
+  const estimated = estCompressed(file.size, quality);
+  const savings   = file.size - estimated;
+  const pct       = Math.round((savings / file.size) * 100);
+  const qColor    = quality < 35 ? t.accentColor : quality < 70 ? 'oklch(54% 0.18 150)' : 'oklch(52% 0.14 240)';
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      padding: '88px 24px 60px', animation: 'fadeUp .3s ease both',
+    }}>
+      <div style={{ maxWidth: 480, width: '100%' }}>
+        <StepRow steps={['วิเคราะห์', 'ตั้งค่า', 'ดาวน์โหลด']} active={1} color={t.accentColor} />
+
+        {/* File chip */}
+        <FileChip file={file} color={t.accentColor} onRemove={onBack} />
+
+        {/* Options card */}
+        <div style={{ background: 'var(--surface)', borderRadius: RL, boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+
+          {/* Size preview */}
+          <div style={{ padding: '22px 22px 18px', background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
+              <div>
+                <p style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 3 }}>ขนาดเดิม</p>
+                <p style={{ fontFamily: 'var(--mono)', fontSize: 20, fontWeight: 500 }}>{fmtSize(file.size)}</p>
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: qColor, background: qColor + '15', borderRadius: 100, padding: '3px 10px', transition: 'all .25s' }}>
+                −{pct}%
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 3 }}>ประมาณหลังบีบ</p>
+                <p style={{ fontFamily: 'var(--mono)', fontSize: 20, fontWeight: 500, color: qColor, transition: 'color .25s' }}>{fmtSize(estimated)}</p>
+              </div>
+            </div>
+            <div style={{ height: 5, background: 'var(--bg3)', borderRadius: 100, overflow: 'hidden', marginBottom: 5 }}>
+              <div style={{ height: '100%', borderRadius: 100, background: qColor, width: `${(estimated / file.size) * 100}%`, transition: 'width .3s ease, background .3s ease' }} />
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--text3)' }}>ประหยัด ~{fmtSize(savings)}</p>
+          </div>
+
+          {/* Slider */}
+          <div style={{ padding: '22px 22px 16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <p style={{ fontSize: 13, fontWeight: 500 }}>ระดับคุณภาพ</p>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 500, color: qColor, background: qColor + '12', borderRadius: 6, padding: '2px 8px', transition: 'all .25s' }}>{quality}</span>
+            </div>
+            <input type="range" min="0" max="100" value={quality}
+              onChange={e => setQuality(Number(e.target.value))}
+              style={{ width: '100%', marginBottom: 10, background: `linear-gradient(to right, ${qColor} ${quality}%, var(--bg3) ${quality}%)`, accentColor: qColor }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text3)' }}>
+              <span>บีบอัดสูงสุด<br /><span style={{ color: 'var(--text2)', fontWeight: 500 }}>ขนาดเล็กที่สุด</span></span>
+              <span style={{ textAlign: 'center' }}>สมดุล<br /><span style={{ color: t.accentColor, fontWeight: 500 }}>แนะนำ</span></span>
+              <span style={{ textAlign: 'right' }}>คุณภาพดี<br /><span style={{ color: 'var(--text2)', fontWeight: 500 }}>บีบอัดน้อย</span></span>
+            </div>
+          </div>
+
+          {/* Checkboxes */}
+          <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', background: 'var(--bg)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <CheckRow label="ลบ metadata ที่ไม่จำเป็น" checked={stripMeta} onChange={setStripMeta} color={t.accentColor} />
+            <CheckRow label="บีบอัด font embedding" checked={false} onChange={() => {}} color={t.accentColor} />
+          </div>
+
+          {/* CTA */}
+          <div style={{ padding: '18px 22px' }}>
+            <Btn label="บีบอัดไฟล์ PDF" color={t.accentColor} onClick={() => onSubmit({ quality, stripMeta, outputSize: estimated })} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Screen: Convert Options ───────────────────────────────────────────────
+const FORMATS = [
+  { id: 'docx', label: 'DOCX', desc: 'Microsoft Word',    color: 'oklch(52% 0.18 240)' },
+  { id: 'jpg',  label: 'JPG',  desc: 'รูปภาพ (ต่อหน้า)', color: 'oklch(58% 0.18 55)'  },
+  { id: 'png',  label: 'PNG',  desc: 'มี transparency',   color: 'oklch(54% 0.16 150)' },
+  { id: 'txt',  label: 'TXT',  desc: 'ข้อความ / OCR',    color: 'oklch(50% 0.12 260)' },
+  { id: 'html', label: 'HTML', desc: 'เว็บเพจ',           color: 'oklch(56% 0.18 20)'  },
+];
+
+const ConvertScreen = ({ t, file, analysis, onSubmit, onBack }) => {
+  const [format, setFormat] = React.useState(null);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '88px 24px 60px', animation: 'fadeUp .3s ease both' }}>
+      <div style={{ maxWidth: 480, width: '100%' }}>
+        <StepRow steps={['วิเคราะห์', 'เลือกรูปแบบ', 'ดาวน์โหลด']} active={1} color="var(--convert)" />
+        <FileChip file={file} color="var(--convert)" onRemove={onBack} />
+
+        {analysis.type === 'image' && (
+          <div style={{
+            display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px',
+            background: 'oklch(58% 0.18 55 / .08)', border: '1px solid oklch(58% 0.18 55 / .3)',
+            borderRadius: R, marginBottom: 16, fontSize: 12, color: 'oklch(40% 0.12 55)',
+          }}>
+            <Icon name="scan" size={15} color="oklch(58% 0.18 55)" sw={1.5} style={{ flexShrink: 0, marginTop: 1 }} />
+            <span>ไฟล์นี้เป็น Scanned PDF — ระบบจะใช้ OCR เพื่อดึงข้อความอัตโนมัติ</span>
+          </div>
+        )}
+
+        <div style={{ background: 'var(--surface)', borderRadius: RL, boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+          <div style={{ padding: '20px 20px 16px' }}>
+            <p style={{ fontSize: 13, fontWeight: 500, marginBottom: 14 }}>เลือกรูปแบบที่ต้องการ</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {FORMATS.map(f => {
+                const sel = format === f.id;
+                return (
+                  <button key={f.id} onClick={() => setFormat(f.id)} style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '13px 14px',
+                    background: sel ? f.color + '10' : 'var(--bg)',
+                    border: `1.5px solid ${sel ? f.color : 'var(--border)'}`,
+                    borderRadius: R, cursor: 'pointer', textAlign: 'left', transition: 'all .15s',
+                  }}>
+                    <div style={{ width: 30, height: 30, borderRadius: 7, flexShrink: 0, background: sel ? f.color : 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s' }}>
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 700, color: sel ? 'white' : 'var(--text3)', letterSpacing: '0.04em' }}>{f.label}</span>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: sel ? f.color : 'var(--text)' }}>{f.label}</p>
+                      <p style={{ fontSize: 11, color: 'var(--text3)' }}>{f.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{ padding: '0 20px 18px' }}>
+            <Btn
+              label={format ? `แปลงเป็น ${format.toUpperCase()}` : 'กรุณาเลือกรูปแบบ'}
+              color="var(--convert)"
+              disabled={!format}
+              onClick={() => format && onSubmit({ format, outputSize: Math.round(file.size * 1.05) })}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Screen: Processing ─────────────────────────────────────────────────────
+const ProcessingScreen = ({ t, file, action, speed, onDone }) => {
+  const isCompress = action === 'compress';
+  const phases = isCompress
+    ? ['โหลดไฟล์…', 'บีบอัดรูปภาพ…', 'ปรับโครงสร้าง…', 'บันทึกผล…']
+    : ['โหลดไฟล์…', 'แปลงเนื้อหา…', 'ตรวจสอบคุณภาพ…', 'บันทึกผล…'];
+
+  const [prog, setProg] = React.useState(0);
+  const [phaseIdx, setPhaseIdx] = React.useState(0);
+
+  React.useEffect(() => {
+    let p = 0;
+    const iv = setInterval(() => {
+      p += Math.random() * 14 + 7;
+      if (p > 100) p = 100;
+      setProg(Math.round(p));
+      setPhaseIdx(Math.min(phases.length - 1, Math.floor((p / 100) * phases.length)));
+      if (p >= 100) { clearInterval(iv); setTimeout(onDone, 500); }
+    }, 220 / speed);
+    return () => clearInterval(iv);
+  }, []);
+
+  const color = isCompress ? t.accentColor : 'var(--convert)';
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', animation: 'fadeIn .3s ease both' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: RL, padding: '44px 40px', maxWidth: 440, width: '100%', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)', textAlign: 'center' }}>
+        <div style={{ width: 60, height: 60, margin: '0 auto 22px', borderRadius: 15, background: color + '12', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', inset: 0, borderRadius: 15, border: `2px solid ${color}`, borderTopColor: 'transparent', animation: 'spin .9s linear infinite' }} />
+          <Icon name={isCompress ? 'compress' : 'convert'} size={24} color={color} sw={1.4} />
+        </div>
+        <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 6, letterSpacing: '-0.02em' }}>
+          {isCompress ? 'กำลังบีบอัดไฟล์' : 'กำลังแปลงไฟล์'}
+        </h2>
+        <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 28, fontFamily: 'var(--mono)' }}>{file.name}</p>
+
+        {/* Segmented bar */}
+        <div style={{ display: 'flex', gap: 4, marginBottom: 14 }}>
+          {phases.map((_, i) => (
+            <div key={i} style={{ flex: 1, height: 4, borderRadius: 100, background: i < phaseIdx ? color : 'var(--bg3)', overflow: i === phaseIdx ? 'hidden' : 'visible', position: 'relative' }}>
+              {i === phaseIdx && (
+                <div style={{ position: 'absolute', inset: 0, background: color, width: `${(prog % (100/phases.length)) * phases.length}%`, transition: 'width .22s ease' }} />
+              )}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+          <span style={{ color: 'var(--text3)' }}>{phases[phaseIdx]}</span>
+          <span style={{ color, fontFamily: 'var(--mono)', fontWeight: 500 }}>{prog}%</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Screen: Download ───────────────────────────────────────────────────────
+const DownloadScreen = ({ t, file, result, action, onReset }) => {
+  const [clicked, setClicked] = React.useState(false);
+  const isCompress = action === 'compress';
+  const savedPct = isCompress ? Math.round(((file.size - result.outputSize) / file.size) * 100) : null;
+  const outName = isCompress
+    ? file.name.replace(/\.pdf$/i, '_compressed.pdf')
+    : file.name.replace(/\.pdf$/i, `.${result.format}`);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '88px 24px 40px', animation: 'scaleIn .3s ease both' }}>
+      <div style={{ maxWidth: 440, width: '100%' }}>
+        {/* Success icon */}
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ width: 68, height: 68, borderRadius: '50%', background: 'var(--success-light)', border: '2px solid var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+              <polyline points="5,15 12,22 25,8" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <h2 style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-0.03em', marginBottom: 4 }}>
+            {isCompress ? 'บีบอัดสำเร็จ!' : 'แปลงไฟล์สำเร็จ!'}
+          </h2>
+          <p style={{ fontSize: 13, color: 'var(--text3)' }}>ไฟล์พร้อมสำหรับดาวน์โหลด</p>
+        </div>
+
+        <div style={{ background: 'var(--surface)', borderRadius: RL, boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 12 }}>
+          {/* Stats (compress only) */}
+          {isCompress && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: '1px solid var(--border)' }}>
+              {[
+                { lbl: 'ขนาดเดิม',   val: fmtSize(file.size),        mono: true },
+                { lbl: 'ขนาดใหม่',   val: fmtSize(result.outputSize), mono: true, green: true },
+                { lbl: 'ประหยัดได้', val: `-${savedPct}%`,            green: true },
+              ].map((s, i) => (
+                <div key={i} style={{ padding: '14px', textAlign: 'center', borderRight: i < 2 ? '1px solid var(--border)' : 'none' }}>
+                  <p style={{ fontSize: 10, color: 'var(--text3)', marginBottom: 3, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{s.lbl}</p>
+                  <p style={{ fontFamily: s.mono ? 'var(--mono)' : 'inherit', fontSize: 15, fontWeight: 600, color: s.green ? 'var(--success)' : 'var(--text)' }}>{s.val}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* File row */}
+          <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--border)' }}>
+            <div style={{ width: 34, height: 34, borderRadius: 8, flexShrink: 0, background: 'var(--success-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="file" size={17} color="var(--success)" sw={1.5} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{outName}</p>
+              <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)', marginTop: 2 }}>{fmtSize(result.outputSize)}</p>
+            </div>
+          </div>
+
+          <div style={{ padding: '14px 18px' }}>
+            <button onClick={() => setClicked(true)} style={{
+              width: '100%', padding: '13px',
+              background: clicked ? 'var(--success)' : t.accentColor,
+              border: 'none', borderRadius: R, color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              transition: 'all .2s',
+              boxShadow: clicked ? '0 4px 16px oklch(56% 0.18 150 / .35)' : `0 4px 16px ${t.accentColor}40`,
+            }}>
+              <Icon name={clicked ? 'check' : 'download'} size={17} color="white" sw={2} />
+              {clicked ? 'ดาวน์โหลดแล้ว' : 'ดาวน์โหลดไฟล์'}
+            </button>
+          </div>
+        </div>
+
+        <button onClick={onReset} style={{
+          width: '100%', padding: '11px',
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          borderRadius: R, color: 'var(--text2)', fontSize: 13, cursor: 'pointer',
+          transition: 'all .15s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = t.accentColor; e.currentTarget.style.color = t.accentColor; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text2)'; }}
+        >
+          + อัปโหลดไฟล์ใหม่
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─── Settings Modal ─────────────────────────────────────────────────────────
+const SettingsModal = ({ onClose }) => (
+  <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,.38)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'fadeIn .2s ease both' }} onClick={onClose}>
+    <div style={{ background: 'var(--surface)', borderRadius: 20, padding: '26px', width: '100%', maxWidth: 360, boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)', animation: 'scaleIn .2s ease both' }} onClick={e => e.stopPropagation()}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.02em' }}>ตั้งค่า</h2>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', padding: 4 }}><Icon name="x" size={17} /></button>
+      </div>
+      {[
+        { label: 'ขนาดไฟล์สูงสุด', value: '100 MB' },
+        { label: 'เก็บไฟล์ชั่วคราว', value: '24 ชั่วโมง' },
+        { label: 'เวอร์ชัน',         value: 'v2.0.0-beta' },
+      ].map((row, i, arr) => (
+        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
+          <span style={{ fontSize: 13, color: 'var(--text2)' }}>{row.label}</span>
+          <span style={{ fontSize: 13, fontFamily: 'var(--mono)', color: 'var(--text)' }}>{row.value}</span>
+        </div>
+      ))}
+      <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 16, lineHeight: 1.6 }}>
+        ไฟล์จะถูกประมวลผลและลบอัตโนมัติหลังการใช้งาน
+      </p>
+    </div>
+  </div>
+);
+
+// ─── Shared utilities ───────────────────────────────────────────────────────
+const StepRow = ({ steps, active, color }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, fontSize: 12, color: 'var(--text3)' }}>
+    {steps.map((s, i) => (
+      <React.Fragment key={i}>
+        {i > 0 && <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{
+            width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+            background: i < active ? color : i === active ? color : 'var(--bg3)',
+            border: `1.5px solid ${i <= active ? color : 'var(--border)'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 9, fontWeight: 700,
+            color: i <= active ? 'white' : 'var(--text3)',
+          }}>
+            {i < active ? <Icon name="check" size={9} color="white" sw={3} /> : i + 1}
+          </div>
+          <span style={{ color: i === active ? 'var(--text)' : 'var(--text3)', fontWeight: i === active ? 500 : 400 }}>{s}</span>
+        </div>
+      </React.Fragment>
+    ))}
+  </div>
+);
+
+const FileChip = ({ file, color, onRemove }) => (
+  <div style={{
+    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+    marginBottom: 16, background: 'var(--surface)', borderRadius: R,
+    border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)',
+  }}>
+    <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, background: color + (typeof color === 'string' && color.startsWith('var') ? '' : '12'), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Icon name="file" size={16} color={color} sw={1.5} />
+    </div>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <p style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</p>
+      <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)' }}>{fmtSize(file.size)}</p>
+    </div>
+    <button onClick={onRemove} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', padding: 4, borderRadius: 6 }}
+      onMouseEnter={e => e.currentTarget.style.color = color}
+      onMouseLeave={e => e.currentTarget.style.color = 'var(--text3)'}
+    ><Icon name="x" size={15} /></button>
+  </div>
+);
+
+const CheckRow = ({ label, checked, onChange, color }) => (
+  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+    <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ accentColor: color, width: 14, height: 14, cursor: 'pointer' }} />
+    <span style={{ fontSize: 12, color: 'var(--text2)' }}>{label}</span>
+  </label>
+);
+
+const Btn = ({ label, color, onClick, disabled = false }) => (
+  <button onClick={onClick} disabled={disabled} style={{
+    width: '100%', padding: '14px',
+    background: disabled ? 'var(--bg3)' : color,
+    border: 'none', borderRadius: R,
+    color: disabled ? 'var(--text3)' : 'white',
+    fontSize: 15, fontWeight: 600,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    letterSpacing: '-0.01em', transition: 'all .15s',
+    boxShadow: disabled ? 'none' : `0 4px 16px ${color}40`,
+  }}
+  onMouseEnter={e => { if (!disabled) { e.currentTarget.style.filter = 'brightness(1.1)'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
+  onMouseLeave={e => { e.currentTarget.style.filter = 'none'; e.currentTarget.style.transform = 'none'; }}
+  >{label}</button>
+);
+
+// ─── App ─────────────────────────────────────────────────────────────────────
+// Flow: home → analyzing → analyzed → compress/convert → processing → done
+const App = () => {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [screen, setScreen] = React.useState('home');
+  const [file, setFile] = React.useState(null);
+  const [analysis, setAnalysis] = React.useState(null);
+  const [action, setAction] = React.useState(null);   // 'compress' | 'convert'
+  const [result, setResult] = React.useState(null);
+  const [showSettings, setShowSettings] = React.useState(false);
+
+  React.useEffect(() => {
+    document.documentElement.style.setProperty('--accent', t.accentColor);
+  }, [t.accentColor]);
+
+  const handleFile = f => { setFile(f); setScreen('analyzing'); };
+  const handleAnalyzed = data => { setAnalysis(data); setScreen('analyzed'); };
+  const handlePick = id => { setAction(id); setScreen(id); };
+  const handleSubmit = res => { setResult(res); setScreen('processing'); };
+  const handleDone = () => setScreen('done');
+  const handleReset = () => { setFile(null); setAnalysis(null); setAction(null); setResult(null); setScreen('home'); };
+  const handleBack = () => setScreen('analyzed');
+
+  const showBack  = !['home', 'analyzing', 'done'].includes(screen);
+  const showNav   = screen !== 'analyzing';
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      {showNav && (
+        <Nav t={t} onHome={handleReset} onSettings={() => setShowSettings(true)} showBack={showBack} />
+      )}
+
+      <div style={{ paddingTop: showNav ? 56 : 0 }}>
+        {screen === 'home'       && <HomeScreen     t={t} onFile={handleFile} />}
+        {screen === 'analyzing'  && <AnalyzingScreen file={file} speed={t.animationSpeed} onDone={handleAnalyzed} />}
+        {screen === 'analyzed'   && <AnalysisScreen  t={t} file={file} analysis={analysis} onPick={handlePick} onReset={handleReset} />}
+        {screen === 'compress'   && <CompressScreen  t={t} file={file} onSubmit={handleSubmit} onBack={handleBack} />}
+        {screen === 'convert'    && <ConvertScreen   t={t} file={file} analysis={analysis} onSubmit={handleSubmit} onBack={handleBack} />}
+        {screen === 'processing' && <ProcessingScreen t={t} file={file} action={action} speed={t.animationSpeed} onDone={handleDone} />}
+        {screen === 'done'       && <DownloadScreen   t={t} file={file} result={result} action={action} onReset={handleReset} />}
+      </div>
+
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+
+      <TweaksPanel>
+        <TweakSection label="Brand" />
+        <TweakText label="App name" value={t.brandName} onChange={v => setTweak('brandName', v)} />
+        <TweakSection label="Colors" />
+        <TweakColor label="Accent" value={t.accentColor} onChange={v => setTweak('accentColor', v)} />
+        <TweakSection label="Animation" />
+        <TweakSlider label="Speed" value={t.animationSpeed} min={0.25} max={3} step={0.25} unit="×" onChange={v => setTweak('animationSpeed', v)} />
+      </TweaksPanel>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
