@@ -137,7 +137,7 @@ export default function App() {
   const showNav = screen !== "analyzing";
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div style={{ background: "var(--bg)" }}>
       {showNav && (
         <Nav
           t={t}
